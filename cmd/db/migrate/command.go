@@ -1,4 +1,4 @@
-package check
+package migrate
 
 import (
 	"os"
@@ -21,19 +21,19 @@ var (
 func GetCommand() *cobra.Command {
 	if !inited {
 		log = logger.New()
-		conf = &configuration.Global
 		cmd = &cobra.Command{
-			Use:   "check",
-			Short: "verify a connection can be made with the provided credentials",
+			Use:   "migrate [flags] ./path/to/migrations",
+			Short: "perform database migrations",
 			Run:   run,
 		}
+		conf = &configuration.Global
 		inited = true
-		log.Trace("initialised check command")
+		log.Trace("initialised migrate command")
 	}
 	return cmd
 }
 
-func run(_ *cobra.Command, _ []string) {
+func run(_ *cobra.Command, args []string) {
 	dbOptions := db.Options{
 		Hostname: conf.GetString("host"),
 		Port:     uint16(conf.GetUint("port")),
@@ -57,7 +57,7 @@ func run(_ *cobra.Command, _ []string) {
 		<-time.After(time.Duration(retryInterval) * time.Millisecond)
 		retriesLeft--
 	}
-	os.Exit(0)
+
 }
 
 func check() bool {

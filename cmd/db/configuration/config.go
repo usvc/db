@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	Map = config.Map{
+	Global = config.Map{
 		"driver": &config.String{
 			Default:   "mysql",
 			Shorthand: "d",
@@ -18,13 +18,21 @@ var (
 			Default:   3306,
 			Shorthand: "P",
 		},
-		"user": &config.String{
-			Default:   "username",
+		"username": &config.String{
+			Default:   "user",
 			Shorthand: "u",
 		},
 		"password": &config.String{
 			Default:   "password",
 			Shorthand: "p",
+		},
+		"retry-interval-ms": &config.Uint{
+			Default:   3000,
+			Shorthand: "R",
+		},
+		"retry-count": &config.Uint{
+			Default:   0,
+			Shorthand: "r",
 		},
 	}
 )

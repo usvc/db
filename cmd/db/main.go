@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/usvc/db/cmd/db/check"
 	"github.com/usvc/db/cmd/db/configuration"
+	"github.com/usvc/db/cmd/db/migrate"
 )
 
 func GetCommand() *cobra.Command {
@@ -11,8 +12,9 @@ func GetCommand() *cobra.Command {
 		Use: "db",
 		Run: run,
 	}
-	configuration.Map.ApplyToCobraPersistent(command)
+	configuration.Global.ApplyToCobraPersistent(command)
 	command.AddCommand(check.GetCommand())
+	command.AddCommand(migrate.GetCommand())
 	return command
 }
 

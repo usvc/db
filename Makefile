@@ -13,6 +13,14 @@ BIN_PATH=$(CMD_ROOT)_$$(go env GOOS)_$$(go env GOARCH)${BIN_EXT}
 deps:
 	go mod vendor -v
 	go mod tidy -v
+dev_d:
+	USER_ID=$$(id -u) docker-compose -f ./deploy/dev/docker-compose.yaml up -d
+dev: dev_d
+	docker-compose -f ./deploy/dev/docker-compose.yaml logs -f
+dev_stop:
+	docker-compose -f ./deploy/dev/docker-compose.yaml down
+dev_clean: dev_stop
+	docker-compose -f ./deploy/dev/docker-compose.yaml rm
 run:
 	go run ./cmd/$(CMD_ROOT)
 test:
