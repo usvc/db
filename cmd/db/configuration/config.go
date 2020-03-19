@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"github.com/usvc/go-config"
+	"github.com/usvc/go-logger"
 )
 
 var (
@@ -33,6 +34,14 @@ var (
 		"retry-count": &config.Uint{
 			Default:   5,
 			Shorthand: "r",
+		},
+		"log-format": &config.String{
+			Default:   string(logger.FormatText),
+			Shorthand: "f",
+		},
+		"log-type": &config.String{
+			Default:   string(logger.TypeStdout),
+			Shorthand: "t",
 		},
 	}
 )

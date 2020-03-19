@@ -22,13 +22,15 @@ var (
 
 func GetCommand() *cobra.Command {
 	if !inited {
-		log = logger.New()
+		log = logger.New(logger.Options{
+			Format: logger.Format(configuration.Global.GetString("log-format")),
+			Type:   logger.Type(configuration.Global.GetString("log-type")),
+		})
 		cmd = &cobra.Command{
 			Use:   "migrate [flags] ./path/to/migrations",
 			Short: "perform database migrations",
 			Run:   run,
 		}
-		conf.ApplyToCobra(cmd)
 		inited = true
 		log.Trace("initialised migrate command")
 	}
@@ -68,23 +70,27 @@ func run(_ *cobra.Command, args []string) {
 	if err := db.Init(dbOptions); err != nil {
 		log.Warn("an error happened while initialising the database connection: '%s'", err)
 	}
-	for !check() {
-		if retriesLeft == 0 {
+	for {
+		if err := db.Check(); err == nil {
+			log.Infof(
+				"successfully connected to '%s@%s:%v' (using password: %v)",
+				dbOptions.Username,
+				dbOptions.Hostname,
+				dbOptions.Port,
+				len(dbOptions.Password) > 0,
+			)
+			break
+		} else if retriesLeft == 0 {
 			log.Error("no more retries left, giving up and exitting...")
 			os.Exit(1)
 			break
+		} else {
+			log.Warnf("database connection failed: '%s'", err)
 		}
 		log.Debugf("retrying in %v (%v tries left)...", retryInterval, retriesLeft)
 		<-time.After(retryInterval)
 		retriesLeft--
 	}
-	log.Infof(
-		"successfully connected to '%s@%s:%v' (using password: %v)",
-		dbOptions.Username,
-		dbOptions.Hostname,
-		dbOptions.Port,
-		len(dbOptions.Password) > 0,
-	)
 
 	// get file system list
 	migrations, err := mysql.NewFromDirectory(pathToMigrations)
@@ -98,7 +104,13 @@ func run(_ *cobra.Command, args []string) {
 	var migrationError error
 	migrationTableName := "migrations"
 	connection := db.Get()
+	appliedMigrations := uint(0)
+	lastAppliedMigrationIndex := 0
 	for i := 0; i < len(migrations); i++ {
+		if !conf.GetBool("all the way") && appliedMigrations >= conf.GetUint("steps") {
+			break
+		}
+		lastAppliedMigrationIndex = i
 		migration := migrations[i]
 		log.Debugf("[%s] processing...", migration.Name)
 		if err := migration.Validate(migrationTableName, connection); err != nil && err != mysql.NoErrDoesNotExist {
@@ -118,19 +130,19 @@ func run(_ *cobra.Command, args []string) {
 			break
 		}
 		log.Infof("[%s] applied successfully", migration.Name)
+		appliedMigrations++
 	}
 	if migrationError != nil {
 		log.Error("migrations did not complete successfully: '%s'", migrationError)
 		os.Exit(1)
+	} else if lastAppliedMigrationIndex >= len(migrations)-1 {
+		log.Info("migrations are up-to-date, cheers!")
+	} else {
+		unappliedMigrations := []string{}
+		for j := lastAppliedMigrationIndex + 1; j < len(migrations); j++ {
+			unappliedMigrations = append(unappliedMigrations, migrations[j].Name)
+		}
+		log.Infof("%v migrations left to go: %v", len(unappliedMigrations), unappliedMigrations)
 	}
-	log.Info("migrations are up-to-date, cheers!")
 	os.Exit(0)
-}
-
-func check() bool {
-	if dbCheckErr := db.Check(); dbCheckErr != nil {
-		log.Warnf("failed to access database (%s)", dbCheckErr)
-		return false
-	}
-	return true
 }
