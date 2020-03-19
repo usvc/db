@@ -2,6 +2,8 @@ package migrate
 
 import (
 	"os"
+	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -34,29 +36,55 @@ func GetCommand() *cobra.Command {
 }
 
 func run(_ *cobra.Command, args []string) {
+	// initialise
 	dbOptions := db.Options{
 		Hostname: conf.GetString("host"),
 		Port:     uint16(conf.GetUint("port")),
-		Username: conf.GetString("user"),
+		Username: conf.GetString("username"),
 		Password: conf.GetString("password"),
 	}
-	log.Debugf("hostname: %s", dbOptions.Hostname)
-	log.Debugf("port: %v", dbOptions.Port)
-	log.Debugf("username: %s", dbOptions.Username)
-	log.Debugf("password: %v", len(dbOptions.Password) > 0)
-	db.Init(dbOptions)
 	retriesLeft := conf.GetUint("retry-count")
-	retryInterval := conf.GetUint("retry-interval-ms")
+	retryInterval := time.Duration(conf.GetUint("retry-interval-ms")) * time.Millisecond
+	pathToMigrations := path.Join(args...)
+	if !filepath.IsAbs(pathToMigrations) {
+		cwd, err := os.Getwd()
+		if err != nil {
+			log.Errorf("unable to access the current working directory")
+			os.Exit(1)
+		}
+		pathToMigrations = path.Join(cwd, pathToMigrations)
+	}
+
+	// debug
+	log.Debugf("hostname      : %s", dbOptions.Hostname)
+	log.Debugf("port          : %v", dbOptions.Port)
+	log.Debugf("username      : %s", dbOptions.Username)
+	log.Debugf("password      : %v", len(dbOptions.Password) > 0)
+	log.Debugf("migrations    : %s", pathToMigrations)
+	log.Debugf("retry interval: %v", retryInterval)
+	log.Debugf("retry limit   : %v", retriesLeft)
+
+	// start
+	if err := db.Init(dbOptions); err != nil {
+		log.Warn("an error happened while initialising the database connection: '%s'", err)
+	}
 	for !check() {
 		if retriesLeft == 0 {
-			log.Error("no more retries left, giving up")
+			log.Error("no more retries left, giving up and exitting...")
 			os.Exit(1)
 			break
 		}
-		log.Debugf("retrying in %v (%v tries left)...", time.Duration(retryInterval)*time.Millisecond, retriesLeft)
-		<-time.After(time.Duration(retryInterval) * time.Millisecond)
+		log.Debugf("retrying in %v (%v tries left)...", retryInterval, retriesLeft)
+		<-time.After(retryInterval)
 		retriesLeft--
 	}
+	log.Infof(
+		"successfully connected to '%s@%s:%v' (using password: %v)",
+		dbOptions.Username,
+		dbOptions.Hostname,
+		dbOptions.Port,
+		len(dbOptions.Password) > 0,
+	)
 
 }
 
