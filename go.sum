@@ -119,8 +119,8 @@ github.com/ugorji/go v1.1.4/go.mod h1:uQMGLiO92mf5W77hV/PUCpI3pbzQx3CRekS0kk+RGr
 github.com/usvc/go-config v0.2.0/go.mod h1:dOPlwKrDyUPKQk+AI6MqP70ZEi0tDd13Olpg9RZ+1Y8=
 github.com/usvc/go-config v0.2.2 h1:b2xfNgDU9Pz6bG1V/xoGVf6+5apODN/5Yidnt7MgJeY=
 github.com/usvc/go-config v0.2.2/go.mod h1:dOPlwKrDyUPKQk+AI6MqP70ZEi0tDd13Olpg9RZ+1Y8=
-github.com/usvc/go-db v1.0.7 h1:MdcBhGNo54UukM4NzKZZeuqQrCUUaQvRz1Q2LnSqETk=
-github.com/usvc/go-db v1.0.7/go.mod h1:P56PEFeoM5GdUcisJB1Pp3CxcmSXapg3WRUliAmd708=
+github.com/usvc/go-db v1.0.10 h1:YNg5jBLVQVpfxfMB3aSS09ElhVXDxue47cfkZy6FsqA=
+github.com/usvc/go-db v1.0.10/go.mod h1:P56PEFeoM5GdUcisJB1Pp3CxcmSXapg3WRUliAmd708=
 github.com/usvc/go-logger v0.3.10 h1:tV9t2ONrJ8Yafj6IcJmUXBT0puwjGwVaWEJGtcn/djc=
 github.com/usvc/go-logger v0.3.10/go.mod h1:HeY7Gck+mvbFpICFAGSXLdOUX9qoVv8qYzQjCmdzILE=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=

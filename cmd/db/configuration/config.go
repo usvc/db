@@ -31,7 +31,7 @@ var (
 			Shorthand: "R",
 		},
 		"retry-count": &config.Uint{
-			Default:   0,
+			Default:   5,
 			Shorthand: "r",
 		},
 	}
