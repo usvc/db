@@ -28,7 +28,7 @@ func GetCommand() *cobra.Command {
 		})
 		cmd = &cobra.Command{
 			Use:   "migrate [flags] ./path/to/migrations",
-			Short: "perform database migrations",
+			Short: "Perform database migrations",
 			Run:   run,
 		}
 		inited = true

@@ -24,7 +24,7 @@ func GetCommand() *cobra.Command {
 		})
 		cmd = &cobra.Command{
 			Use:   "check",
-			Short: "verify a connection can be made with the provided credentials",
+			Short: "Verify a connection can be made with the provided credentials",
 			Run:   run,
 		}
 		inited = true

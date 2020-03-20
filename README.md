@@ -10,11 +10,51 @@
 
 An easy-peasy database CLI tool.
 
+| Find it on | URL |
+| --- | --- |
+| Github | [https://github.com/usvc/db](https://github.com/usvc/db) |
+| Gitlab | [https://gitlab.com/usvc/utils/db](https://gitlab.com/usvc/utils/db) |
+
 - - -
 
 # Usage
 
-> `WIP`
+## Quick Usage
+
+```sh
+# show help
+db --help;
+
+# check database credentials/connection
+db check;
+
+# migrate database (using files at ./path/to/migrations)
+db migrate ./path/to/migrations;
+```
+
+## Show Help
+
+The `--help` flag shows all possible flags/sub-commands. The configurations can also be found below in alphabetical order:
+
+| Flag | Default Value | Description |
+| --- | --- | --- |
+| `-d, --driver` | `"mysql"` | Defines the database driver to use (only MySQL is supported for now) |
+| `-H, --host` | `"localhost"` | Defines the hostname at which the database server can be reached at |
+| `-f, --log-format` | `"text"` | Defines the format of the logger according to [`github.com/usvc/go-logger`](https://github.com/usvc/go-logger). Other values: [`"json"`] |
+| `-t, --log-type` | `"stdout"` | Defines the type of the logger according to [`github.com/usvc/go-logger`](github.com/usvc/go-logger). Other values: [`"levelled"`] |
+| `-p, --password` | `"password"` | Defines the password of the user used to login to the database server |
+| `-P, --port` | `3306` | Defines the port at which the database server can be reached |
+| `-r, --retry-count` | `5` | Defines the number of times the application will re-attempt a failed connection to the database |
+| `-R, --retry-interval-ms` | `3000` | Defines the number of milliseconds in between database connection retry attempts |
+| `-u, --username` | `"user"` | Defines the username of the user used to login to the database server |
+
+## Check Database Credentials/Connection
+
+The `check` sub-command 
+
+## Migrate Database
+
+
 
 - - -
 
