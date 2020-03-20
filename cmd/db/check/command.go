@@ -1,12 +1,8 @@
 package check
 
 import (
-	"os"
-	"time"
-
 	"github.com/spf13/cobra"
 	"github.com/usvc/db/cmd/db/configuration"
-	"github.com/usvc/go-db"
 	"github.com/usvc/go-logger"
 )
 
@@ -18,63 +14,18 @@ var (
 
 func GetCommand() *cobra.Command {
 	if !inited {
-		log = logger.New(logger.Options{
-			Format: logger.Format(configuration.Global.GetString("log-format")),
-			Type:   logger.Type(configuration.Global.GetString("log-type")),
-		})
 		cmd = &cobra.Command{
 			Use:   "check",
 			Short: "Verify a connection can be made with the provided credentials",
-			Run:   run,
+			PreRun: func(_ *cobra.Command, _ []string) {
+				log = logger.New(logger.Options{
+					Format: logger.Format(configuration.Global.GetString("log-format")),
+					Type:   logger.Type(configuration.Global.GetString("log-type")),
+				})
+			},
+			Run: check,
 		}
 		inited = true
-		log.Trace("initialised check command")
 	}
 	return cmd
-}
-
-func run(_ *cobra.Command, _ []string) {
-	dbOptions := db.Options{
-		Hostname: configuration.Global.GetString("host"),
-		Port:     uint16(configuration.Global.GetUint("port")),
-		Username: configuration.Global.GetString("username"),
-		Password: configuration.Global.GetString("password"),
-	}
-	retriesLeft := configuration.Global.GetUint("retry-count")
-	retryInterval := time.Duration(configuration.Global.GetUint("retry-interval-ms")) * time.Millisecond
-
-	log.Debugf("hostname      : %s", dbOptions.Hostname)
-	log.Debugf("port          : %v", dbOptions.Port)
-	log.Debugf("username      : %s", dbOptions.Username)
-	log.Debugf("password      : %v", len(dbOptions.Password) > 0)
-	log.Debugf("retry interval: %v", retryInterval)
-	log.Debugf("retry limit   : %v", retriesLeft)
-
-	// start
-	if err := db.Init(dbOptions); err != nil {
-		log.Warn("an error happened while initialising the database connection: '%s'", err)
-	}
-	for {
-		if err := db.Check(); err == nil {
-			log.Infof(
-				"successfully connected to '%s@%s:%v' (using password: %v)",
-				dbOptions.Username,
-				dbOptions.Hostname,
-				dbOptions.Port,
-				len(dbOptions.Password) > 0,
-			)
-			break
-		} else if retriesLeft == 0 {
-			log.Error("no more retries left, giving up and exitting...")
-			os.Exit(1)
-			break
-		} else {
-			log.Warnf("database connection failed: '%s'", err)
-		}
-		log.Debugf("retrying in %v (%v tries left)...", retryInterval, retriesLeft)
-		<-time.After(retryInterval)
-		retriesLeft--
-	}
-
-	os.Exit(0)
 }
