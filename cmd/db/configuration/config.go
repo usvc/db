@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	FlagDatabase        = "database"
 	FlagDriver          = "driver"
 	FlagHost            = "host"
 	FlagLogFormat       = "log-format"
@@ -19,6 +20,11 @@ const (
 
 var (
 	Global = config.Map{
+		FlagDatabase: &config.String{
+			Default:   "database",
+			Shorthand: "D",
+			Usage:     "defines the database schema to use",
+		},
 		FlagDriver: &config.String{
 			Default:   "mysql",
 			Shorthand: "d",

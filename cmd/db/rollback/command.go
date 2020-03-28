@@ -1,4 +1,4 @@
-package migrate
+package rollback
 
 import (
 	"github.com/spf13/cobra"
@@ -14,20 +14,20 @@ var (
 func GetCommand() *cobra.Command {
 	if cmd == nil {
 		cmd = &cobra.Command{
-			Aliases: []string{"m", "up"},
-			Use:     "migrate [flags] ./path/to/migrations",
-			Short:   "Perform database migrations",
+			Aliases: []string{"rb", "down"},
+			Use:     "rollback [flags] ./path/to/migrations",
+			Short:   "Rolls back database migrations",
 			PreRun: func(_ *cobra.Command, _ []string) {
 				log = logger.New(logger.Options{
 					Fields: map[string]interface{}{
-						"command": "migrate",
+						"command": "rollback",
 					},
 					Format: logger.Format(configuration.Global.GetString(configuration.FlagLogFormat)),
 					Type:   logger.Type(configuration.Global.GetString(configuration.FlagLogType)),
 				})
-				log.Trace("'migrate' command triggered")
+				log.Trace("'rollback' command triggered")
 			},
-			Run: migrate,
+			Run: rollback,
 		}
 		conf.ApplyToCobra(cmd)
 	}

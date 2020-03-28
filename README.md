@@ -15,6 +15,25 @@ An easy-peasy database CLI tool.
 | Github | [https://github.com/usvc/db](https://github.com/usvc/db) |
 | Gitlab | [https://gitlab.com/usvc/utils/db](https://gitlab.com/usvc/utils/db) |
 
+- [DB](#db)
+- [Usage](#usage)
+  - [Quick Overview](#quick-overview)
+  - [Show Help](#show-help)
+  - [Check Database Credentials/Connection](#check-database-credentialsconnection)
+  - [Migrate Database](#migrate-database)
+  - [Exit Codes](#exit-codes)
+- [Configuration](#configuration)
+  - [Environment Variables](#environment-variables)
+- [Development Runbook](#development-runbook)
+  - [Getting Started](#getting-started)
+  - [Continuous Integration (CI) Pipeline](#continuous-integration-ci-pipeline)
+    - [On Github](#on-github)
+      - [Releasing](#releasing)
+    - [On Gitlab](#on-gitlab)
+      - [Version Bumping](#version-bumping)
+      - [DockerHub Publishing](#dockerhub-publishing)
+- [Licensing](#licensing)
+
 - - -
 
 # Usage
@@ -31,11 +50,17 @@ db check;
 # migrate database to the next step only (using files at ./path/to/migrations)
 db migrate ./path/to/migrations;
 
-# migrate database upwards for 2 steps only (using files at ./path/to/migrations)
+# migrate database upwards for two steps only (using files at ./path/to/migrations)
 db migrate --steps 2 ./path/to/migrations;
 
 # migrate database to the latest step (using files at ./path/to/migrations)
 db migrate --latest ./path/to/migrations;
+
+# rollback database to the previous step only (using files at ./path/to/migrations)
+db rollback ./path/to/migrations;
+
+# rollback database two steps only (using files at ./path/to/migrations)
+db rollback --steps 2 ./path/to/migrations;
 ```
 
 ## Show Help
@@ -60,7 +85,17 @@ The `check` sub-command
 
 ## Migrate Database
 
+## Exit Codes
 
+| Exit Code | Description |
+| --- | --- |
+| 0 | Success |
+| 1 | Success with some migrations still not applied |
+| 127 | Invalid arguments detected |
+| 128 | Error while accessing the file system |
+| 129 | Error while connecting to the database |
+| 130 | Error while reading the migrations |
+| 131 | Error while applying the migrations |
 
 - - -
 

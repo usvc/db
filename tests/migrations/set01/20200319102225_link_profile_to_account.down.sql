@@ -1,2 +1,2 @@
-ALTER TABLE `profile`
-  DROP CONSTRAINT profiles_account_id_accounts_fk;
+ALTER TABLE `profiles`
+  DROP FOREIGN KEY `profiles_account_id_accounts_fk`;

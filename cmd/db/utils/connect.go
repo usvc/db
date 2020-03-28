@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/usvc/db/cmd/db/configuration"
 	"github.com/usvc/go-db"
 	"github.com/usvc/go-logger"
 )
@@ -14,6 +13,7 @@ type ConnectOptions struct {
 	Port            uint16
 	Username        string
 	Password        string
+	Database        string
 	RetryCount      uint
 	RetryIntervalMs time.Duration
 	Log             logger.Logger
@@ -21,13 +21,14 @@ type ConnectOptions struct {
 
 func Connect(opts ConnectOptions) *sql.DB {
 	dbOptions := db.Options{
-		Hostname: configuration.Global.GetString("host"),
-		Port:     uint16(configuration.Global.GetUint("port")),
-		Username: configuration.Global.GetString("username"),
-		Password: configuration.Global.GetString("password"),
+		Hostname: opts.Hostname,
+		Port:     opts.Port,
+		Username: opts.Username,
+		Password: opts.Password,
+		Database: opts.Database,
 	}
-	retriesLeft := configuration.Global.GetUint("retry-count")
-	retryInterval := time.Duration(configuration.Global.GetUint("retry-interval-ms")) * time.Millisecond
+	retriesLeft := opts.RetryCount
+	retryInterval := opts.RetryIntervalMs
 	if opts.Log == nil {
 		opts.Log = logger.New(logger.Options{Type: logger.TypeNoOp})
 	}
@@ -37,6 +38,7 @@ func Connect(opts ConnectOptions) *sql.DB {
 	opts.Log.Debugf("port          : %v", dbOptions.Port)
 	opts.Log.Debugf("username      : %s", dbOptions.Username)
 	opts.Log.Debugf("password      : %v", len(dbOptions.Password) > 0)
+	opts.Log.Debugf("database      : %v", dbOptions.Database)
 	opts.Log.Debugf("retry interval: %v", retryInterval)
 	opts.Log.Debugf("retry limit   : %v", retriesLeft)
 

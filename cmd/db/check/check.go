@@ -10,12 +10,13 @@ import (
 
 func check(_ *cobra.Command, _ []string) {
 	utils.Connect(utils.ConnectOptions{
+		Database:        configuration.Global.GetString(configuration.FlagDatabase),
 		Hostname:        configuration.Global.GetString(configuration.FlagHost),
-		Port:            uint16(configuration.Global.GetUint(configuration.FlagPort)),
-		Username:        configuration.Global.GetString(configuration.FlagUsername),
 		Password:        configuration.Global.GetString(configuration.FlagPassword),
+		Port:            uint16(configuration.Global.GetUint(configuration.FlagPort)),
 		RetryCount:      configuration.Global.GetUint(configuration.FlagRetryCount),
 		RetryIntervalMs: time.Duration(configuration.Global.GetUint(configuration.FlagRetryIntervalMs)) * time.Millisecond,
+		Username:        configuration.Global.GetString(configuration.FlagUsername),
 		Log:             log,
 	})
 

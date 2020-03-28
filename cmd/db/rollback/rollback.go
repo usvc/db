@@ -1,4 +1,4 @@
-package migrate
+package rollback
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -15,7 +16,7 @@ import (
 	"github.com/usvc/go-db/migration/mysql"
 )
 
-func migrate(command *cobra.Command, args []string) {
+func rollback(command *cobra.Command, args []string) {
 	// initialise
 	utils.Connect(utils.ConnectOptions{
 		Database:        configuration.Global.GetString(configuration.FlagDatabase),
@@ -53,53 +54,49 @@ func migrate(command *cobra.Command, args []string) {
 	}
 	sort.Sort(migrations)
 
-	// migrate!
-	var migrationError error
+	// rollback!
+	var rollbackError error
 	migrationTableName := conf.GetString(FlagMigrationsTableName)
 	connection := db.Get()
-	appliedMigrationsCount := uint(0)
-	lastAppliedMigrationIndex := 0
-	for i := 0; i < len(migrations); i++ {
-		if !conf.GetBool(FlagLatest) && appliedMigrationsCount >= conf.GetUint(FlagSteps) {
+	processedMigrationsCount := uint(0)
+	rolledBackMigrationNames := []string{}
+	for i := len(migrations) - 1; i >= 0; i-- {
+		if uint(len(rolledBackMigrationNames)) >= conf.GetUint(FlagSteps) {
 			break
 		}
-		lastAppliedMigrationIndex = i
+		processedMigrationsCount++
 		migration := migrations[i]
-		log.Debugf("[%s] processing...", migration.Name)
-		if err := migration.Validate(migrationTableName, connection); err != nil && err != mysql.NoErrDoesNotExist {
-			log.Debugf("[%s] resolving past error: '%s'", migration.Name, err)
-			err = migration.Resolve(migrationTableName, connection)
-			if err != nil {
-				migrationError = err
-				break
-			}
-		}
-		if err := migration.Apply(migrationTableName, connection); err != nil {
-			if err == mysql.NoErrAlreadyApplied {
-				log.Debugf("[%s] already been applied", migration.Name)
+		log.Debugf("[%s] rolling back...", migration.Name)
+		if err := migration.Validate(migrationTableName, connection); err != nil {
+			if err != mysql.NoErrDoesNotExist {
+				log.Debugf("[%s] resolving past error: '%s'", migration.Name, err)
+				err = migration.Resolve(migrationTableName, connection)
+				if err != nil {
+					rollbackError = err
+					break
+				}
+			} else {
+				log.Infof("[%s] did not exist, continuing to previous migration", migration.Name)
 				continue
 			}
-			migrationError = err
+		}
+		if err := migration.Rollback(migrationTableName, connection); err != nil {
+			rollbackError = err
 			break
 		}
-		log.Infof("[%s] applied successfully", migration.Name)
-		appliedMigrationsCount++
+		log.Infof("[%s] rolled back successfully", migration.Name)
+		rolledBackMigrationNames = append(rolledBackMigrationNames, migration.Name)
 	}
 
-	if migrationError != nil {
-		log.Error("migrations did not complete successfully: '%s'", migrationError)
+	if rollbackError != nil {
+		log.Error("rollback did not complete successfully: '%s'", rollbackError)
 		utils.ExitErrorApplyingMigrations()
 		return
-	} else if lastAppliedMigrationIndex < len(migrations)-1 {
-		unappliedMigrations := []string{}
-		for j := lastAppliedMigrationIndex + 1; j < len(migrations); j++ {
-			unappliedMigrations = append(unappliedMigrations, migrations[j].Name)
-		}
-		log.Infof("%v migration(s) left to go: %v", len(unappliedMigrations), unappliedMigrations)
-		utils.ExitSuccessfullyWithIncompleteMigrations()
-		return
+	} else if processedMigrationsCount == uint(len(migrations)) {
+		log.Warn("all possible migrations seem to have already been rolled back")
+	} else {
+		log.Infof("rolled back %v migration(s): [%s] successfully, cheers!", conf.GetUint(FlagSteps), strings.Join(rolledBackMigrationNames, ", "))
 	}
-	log.Info("migrations are up-to-date, cheers!")
 	fmt.Println("exit status 0")
 	utils.ExitSuccessfully()
 }
