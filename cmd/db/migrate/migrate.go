@@ -50,10 +50,10 @@ func migrate(_ *cobra.Command, args []string) {
 	var migrationError error
 	migrationTableName := "migrations"
 	connection := db.Get()
-	appliedMigrations := uint(0)
+	appliedMigrationsCount := uint(0)
 	lastAppliedMigrationIndex := 0
 	for i := 0; i < len(migrations); i++ {
-		if !conf.GetBool("all the way") && appliedMigrations >= conf.GetUint("steps") {
+		if !conf.GetBool("all the way") && appliedMigrationsCount >= conf.GetUint("steps") {
 			break
 		}
 		lastAppliedMigrationIndex = i
@@ -76,8 +76,9 @@ func migrate(_ *cobra.Command, args []string) {
 			break
 		}
 		log.Infof("[%s] applied successfully", migration.Name)
-		appliedMigrations++
+		appliedMigrationsCount++
 	}
+
 	if migrationError != nil {
 		log.Error("migrations did not complete successfully: '%s'", migrationError)
 		os.Exit(1)
