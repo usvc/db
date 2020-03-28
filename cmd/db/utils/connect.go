@@ -2,7 +2,6 @@ package utils
 
 import (
 	"database/sql"
-	"os"
 	"time"
 
 	"github.com/usvc/db/cmd/db/configuration"
@@ -29,6 +28,9 @@ func Connect(opts ConnectOptions) *sql.DB {
 	}
 	retriesLeft := configuration.Global.GetUint("retry-count")
 	retryInterval := time.Duration(configuration.Global.GetUint("retry-interval-ms")) * time.Millisecond
+	if opts.Log == nil {
+		opts.Log = logger.New(logger.Options{Type: logger.TypeNoOp})
+	}
 
 	// debug
 	opts.Log.Debugf("hostname      : %s", dbOptions.Hostname)
@@ -54,7 +56,7 @@ func Connect(opts ConnectOptions) *sql.DB {
 			break
 		} else if retriesLeft == 0 {
 			opts.Log.Error("no more retries left, giving up and exitting...")
-			os.Exit(1)
+			ExitErrorConnectingToDatabase()
 			break
 		} else {
 			opts.Log.Warnf("database connection failed: '%s'", err)

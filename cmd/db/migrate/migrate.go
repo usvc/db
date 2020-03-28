@@ -14,23 +14,28 @@ import (
 	"github.com/usvc/go-db/migration/mysql"
 )
 
-func migrate(_ *cobra.Command, args []string) {
+func migrate(command *cobra.Command, args []string) {
 	// initialise
 	utils.Connect(utils.ConnectOptions{
-		Hostname:        configuration.Global.GetString("host"),
-		Port:            uint16(configuration.Global.GetUint("port")),
-		Username:        configuration.Global.GetString("username"),
-		Password:        configuration.Global.GetString("password"),
-		RetryCount:      configuration.Global.GetUint("retry-count"),
-		RetryIntervalMs: time.Duration(configuration.Global.GetUint("retry-interval-ms")) * time.Millisecond,
+		Hostname:        configuration.Global.GetString(configuration.FlagHost),
+		Port:            uint16(configuration.Global.GetUint(configuration.FlagPort)),
+		Username:        configuration.Global.GetString(configuration.FlagUsername),
+		Password:        configuration.Global.GetString(configuration.FlagPassword),
+		RetryCount:      configuration.Global.GetUint(configuration.FlagRetryCount),
+		RetryIntervalMs: time.Duration(configuration.Global.GetUint(configuration.FlagRetryIntervalMs)) * time.Millisecond,
 		Log:             log,
 	})
 	pathToMigrations := path.Join(args...)
+	if len(pathToMigrations) == 0 {
+		log.Errorf("failed to read in a valid path to use as the migrations source directory, see help as follows:")
+		command.Help()
+		utils.ExitErrorInvalidArguments()
+	}
 	if !filepath.IsAbs(pathToMigrations) {
 		cwd, err := os.Getwd()
 		if err != nil {
-			log.Errorf("unable to access the current working directory")
-			os.Exit(1)
+			log.Errorf("failed to access the current working directory")
+			utils.ExitErrorAccessingFileSystem()
 		}
 		pathToMigrations = path.Join(cwd, pathToMigrations)
 	}
@@ -41,8 +46,8 @@ func migrate(_ *cobra.Command, args []string) {
 	// get file system list
 	migrations, err := mysql.NewFromDirectory(pathToMigrations)
 	if err != nil {
-		log.Errorf("an error happened while retrieving migrations: '%s'", err)
-		os.Exit(1)
+		log.Errorf("failed to retrieve migrations: '%s'", err)
+		utils.ExitErrorReadingMigrations()
 	}
 	sort.Sort(migrations)
 
@@ -53,7 +58,7 @@ func migrate(_ *cobra.Command, args []string) {
 	appliedMigrationsCount := uint(0)
 	lastAppliedMigrationIndex := 0
 	for i := 0; i < len(migrations); i++ {
-		if !conf.GetBool("all the way") && appliedMigrationsCount >= conf.GetUint("steps") {
+		if !conf.GetBool(FlagLatest) && appliedMigrationsCount >= conf.GetUint(FlagSteps) {
 			break
 		}
 		lastAppliedMigrationIndex = i
@@ -81,15 +86,15 @@ func migrate(_ *cobra.Command, args []string) {
 
 	if migrationError != nil {
 		log.Error("migrations did not complete successfully: '%s'", migrationError)
-		os.Exit(1)
-	} else if lastAppliedMigrationIndex >= len(migrations)-1 {
-		log.Info("migrations are up-to-date, cheers!")
-	} else {
+		utils.ExitErrorApplyingMigrations()
+	} else if lastAppliedMigrationIndex < len(migrations)-1 {
 		unappliedMigrations := []string{}
 		for j := lastAppliedMigrationIndex + 1; j < len(migrations); j++ {
 			unappliedMigrations = append(unappliedMigrations, migrations[j].Name)
 		}
 		log.Infof("%v migrations left to go: %v", len(unappliedMigrations), unappliedMigrations)
+		utils.ExitSuccessfullyWithIncompleteMigrations()
 	}
-	os.Exit(0)
+	log.Info("migrations are up-to-date, cheers!")
+	utils.ExitSuccessfully()
 }

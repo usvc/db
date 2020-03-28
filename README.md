@@ -19,7 +19,7 @@ An easy-peasy database CLI tool.
 
 # Usage
 
-## Quick Usage
+## Quick Overview
 
 ```sh
 # show help
@@ -28,8 +28,14 @@ db --help;
 # check database credentials/connection
 db check;
 
-# migrate database (using files at ./path/to/migrations)
+# migrate database to the next step only (using files at ./path/to/migrations)
 db migrate ./path/to/migrations;
+
+# migrate database upwards for 2 steps only (using files at ./path/to/migrations)
+db migrate --steps 2 ./path/to/migrations;
+
+# migrate database to the latest step (using files at ./path/to/migrations)
+db migrate --latest ./path/to/migrations;
 ```
 
 ## Show Help
