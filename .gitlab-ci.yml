@@ -34,17 +34,17 @@ unit test:
     BIN_NAME: db
   before_script: ["git fetch"]
   script: ["entrypoint"]
-build_linux:
+build linux:
   extends: .build
   variables:
     GOOS: linux
     GOARCH: amd64
-build_macos:
+build macos:
   extends: .build
   variables:
     GOOS: darwin
     GOARCH: amd64
-build_windows:
+build windows:
   extends: .build
   variables:
     GOOS: windows
